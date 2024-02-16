@@ -1,7 +1,8 @@
-from Generator import Generator
+from models.Generator import Generator
+from models.midi2pianoroll import midi_to_piano_roll
+from models.CONST_VARS import CONST
+
 import torch
-from midi2pianoroll import midi_to_piano_roll
-from CONST_VARS import CONST
 import numpy as np 
 import os 
 from pypianoroll import Multitrack, Track
@@ -39,14 +40,14 @@ class Predictor:
 
         m = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
         #! save music to npz -> midi
-        m.save('generated_bass.npz')
-        tmp = pypianoroll.load('generated_bass.npz')
-        tmp.write('generated_bass_2.midi')
+        m.save('static/data/generated_drum.npz')
+        tmp = pypianoroll.load('static/data/generated_drum.npz')
+        tmp.write('static/data/generated_drum.midi')
 
         return temp
 
-p = Predictor()
-t1 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
-t2 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
+# p = Predictor()
+# t1 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
+# t2 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
 
-print("ji")
+# print("ji")

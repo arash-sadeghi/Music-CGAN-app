@@ -2,7 +2,7 @@ import mido
 import pretty_midi
 import numpy as np
 import pypianoroll
-from CONST_VARS import CONST
+from models.CONST_VARS import CONST
 def midi_to_piano_roll(midi_file_path):
 
     midi_data = pretty_midi.PrettyMIDI(midi_file_path)
