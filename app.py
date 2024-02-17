@@ -8,7 +8,7 @@ there's an exception, even providing an interactive debugger that runs in the br
 Flask then builds upon this foundation to provide a complete web framework.
 """
 
-from flask import Flask, render_template, request, redirect, flash
+from flask import Flask, render_template, request, redirect, flash, send_file, make_response
 from werkzeug.utils import secure_filename
 from models.Predict import Predictor
 import os
@@ -16,7 +16,7 @@ import os
 predictor = Predictor()
 
 #Save images to the 'static' folder as Flask serves images from this directory
-UPLOAD_FOLDER = 'static/images/'
+UPLOAD_FOLDER = 'static/midi/'
 
 #Create an app object using the Flask class. 
 app = Flask(__name__, static_folder="static")
@@ -44,6 +44,7 @@ def index():
 # Add Post method to the decorator to allow for form submission. 
 @app.route('/', methods=['POST'])
 def submit_file():
+    global res_path
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -54,17 +55,35 @@ def submit_file():
             return redirect(request.url)
         if file:
             filename = secure_filename(file.filename)  #Use this werkzeug method to secure filename. 
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'],filename))
-            res = predictor.generate_drum(os.path.join(app.config['UPLOAD_FOLDER']  , filename))
-            label = "hoho"# getPrediction(filename)
+            save_path = os.path.join(app.config['UPLOAD_FOLDER'],filename)
+            file.save(save_path)
+            res_path = predictor.generate_drum(save_path)
+            label = "Drum successfully generated"
             flash(label)
             full_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             flash(full_filename)
-            return redirect('/')
+            return redirect('/download')
 
+
+@app.route('/download')
+def download_file():
+    global res_path
+    # Generate or fetch the file content dynamically
+    with open(res_path,'rb') as f:
+        file_content = f.read()
+
+    # Create a response with the file content as attachment
+    response = make_response(file_content)
+
+    # Set the appropriate content type and headers for file download
+    response.headers['Content-Type'] = 'application/octet-stream'
+    response.headers['Content-Disposition'] = 'attachment; filename="'+os.path.basename(res_path)+'"'
+    redirect('/')
+
+    return response
 
 if __name__ == "__main__":
-    # port = int(os.environ.get('PORT', 5000)) #Define port so we can map container port to localhost
+    # port = int(os.environ.get('PORT', 3000)) #Define port so we can map container port to localhost
     # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
     app.run()
 

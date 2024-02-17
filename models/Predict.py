@@ -44,7 +44,7 @@ class Predictor:
         tmp = pypianoroll.load('static/data/generated_drum.npz')
         tmp.write('static/data/generated_drum.midi')
 
-        return temp
+        return 'static/data/generated_drum.midi'
 
 # p = Predictor()
 # t1 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
