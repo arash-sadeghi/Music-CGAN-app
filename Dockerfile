@@ -5,4 +5,6 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
 COPY . .
+
+EXPOSE 3009
 CMD ["python", "app.py"]
