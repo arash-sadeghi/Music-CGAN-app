@@ -83,7 +83,7 @@ def download_file():
     return response
 
 if __name__ == "__main__":
-    # port = int(os.environ.get('PORT', 3000)) #Define port so we can map container port to localhost
-    # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
-    app.run()
+    port = int(os.environ.get('PORT', 3000)) #Define port so we can map container port to localhost
+    app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
+    # app.run()
 
