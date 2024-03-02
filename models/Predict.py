@@ -27,12 +27,15 @@ class Predictor:
         res = self.generator(latent,bass_piano_roll)
 
         #* reshaping data inorder to be saved as image
-        temp = torch.cat((res.cpu().detach(),bass_piano_roll.unsqueeze(1)),axis = 1).numpy()
-        temp = temp.transpose(1,0,2,3)
+        # temp = torch.cat((res.cpu().detach(),bass_piano_roll.unsqueeze(1)),axis = 1).numpy()
+        # temp = temp.transpose(1,0,2,3)
+        temp = res.detach().numpy().transpose(1,0,2,3)
         temp = temp.reshape(temp.shape[0] , temp.shape[1] * temp.shape[2] , temp.shape[3])
 
         tracks = []
-        for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
+        # for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
+        for idx, (program, is_drum, track_name) in enumerate(zip([0], [True], ['Drum'])):
+
         # for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
             # pianoroll = np.pad(np.concatenate(data[:4], 1)[idx], ((0, 0), (lowest_pitch, 128 - lowest_pitch - n_pitches)))
             pianoroll = np.pad(temp[idx] > 0.5,((0, 0), (CONST.lowest_pitch, 128 - CONST.lowest_pitch - CONST.n_pitches)))

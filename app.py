@@ -12,8 +12,11 @@ from flask import Flask, render_template, request, redirect, flash, send_file, m
 from werkzeug.utils import secure_filename
 from models.Predict import Predictor
 import os
+from models.Predict import Predictor
+from models.Velocity_assigner.assign_velocity import VelocityAssigner
 
 predictor = Predictor()
+va = VelocityAssigner()
 
 #Save images to the 'static' folder as Flask serves images from this directory
 UPLOAD_FOLDER = 'static/midi/'
@@ -67,13 +70,19 @@ def submit_file():
             save_path = os.path.join(app.config['UPLOAD_FOLDER'],'user_file.midi')
             file.save(save_path)
             res_path = predictor.generate_drum(save_path)
+
+            checkbox_value = request.form.get('assing-velocity', None)
+
+            if checkbox_value == 'on':
+                print('[+] calculating velocities')
+                va.assing_velocity2midi(res_path) #! overwrites the given drum midi file
+
             label = "Drum successfully generated"
             flash(label)
             full_filename = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             flash(full_filename)
             return redirect('/download')
 
-            return redirect('/download')
 
 
 @app.route('/download')
@@ -94,7 +103,7 @@ def download_file():
     return response
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
-    app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
-    # app.run()
+    # port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
+    # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
+    app.run()
 
