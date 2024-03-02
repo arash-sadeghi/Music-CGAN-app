@@ -5,3 +5,5 @@ models/__pycache__/*
 *.midi
 *.npz
 static/
+**/__pycache__/*
+models/Velocity_assigner/weights_1500.pts

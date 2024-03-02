@@ -20,3 +20,7 @@ you should be able to see the app running.
 - docker run -p 3000:3000 flask-app 
 - heroku container:push web --app drummer-companion
 - docker inspect --format='{{.Size}}' flask-app-no-torch
+### Azure commands:
+-  docker build -t drummercompanion.azurecr.io/drummercompanion  .
+-  docker push drummercompanion.azurecr.io/drummercompanion.
+- update docker image on azure: [link](https://stackoverflow.com/questions/57241655/switch-docker-image-in-azure-appservice)
