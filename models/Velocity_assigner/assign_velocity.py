@@ -1,16 +1,15 @@
 from models.Velocity_assigner.bert_midi import BertMidi
 from  models.Velocity_assigner.midi_tokenizer import MidiBertTokenizer
 import torch
-
-
+print("[+] in assign_velocity")
 class VelocityAssigner:
     WEIGHTS_URL = ''
     SCALE_FACTOR = 127 #TODO model is not trained on this. Models scale factor is 200
     def __init__(self,output_path = '.'):
-        self.bert = BertMidi()
+        self.bert = BertMidi() 
         self.midi_tokenizer = MidiBertTokenizer()
+       
         print('[+] loading weights')
-        
         w = torch.load('models/Velocity_assigner/weights_1500.pts',map_location=torch.device('cpu')) 
         self.bert.load_state_dict(w)
         self.output_path = output_path
@@ -44,14 +43,3 @@ class VelocityAssigner:
         music = self.midi_tokenizer.tokenizer_input(self.midi_tokenizer.midi_tokens.tokens)
         return music
 
-
-
-
-# if __name__ == '__main__':
-
-#     predictor = Predictor()
-#     res_path = predictor.generate_drum('static/midi/full_dataset_instance_cleaned-Contrabass_Bass.mid')
-
-#     va = VelocityAssigner()
-#     va.assing_velocity2midi('static/midi/1_funk_80_beat_4-4.mid')
-#     va.assing_velocity2midi(res_path)

@@ -4,3 +4,8 @@
 models/__pycache__/*
 *.midi
 *.npz
+**/*.pyc
+__pycache__
+**/__pycache__
+models/Velocity_assigner/pretrained_weights/**/* 
+models/Velocity_assigner/pretrained_weights

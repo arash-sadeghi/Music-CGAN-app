@@ -5,6 +5,8 @@ from transformers import BertTokenizer
 import json
 import os 
 
+print("[+] midi tok")
+
 class MidiBertTokenizer:
     PRE_TRAINED_MODEL_NAME = 'bert-base-cased'
     def __init__(self) -> None:

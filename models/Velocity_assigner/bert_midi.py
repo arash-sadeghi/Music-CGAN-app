@@ -1,15 +1,19 @@
 from transformers import BertModel, BertTokenizer, AdamW, get_linear_schedule_with_warmup
 from torch import nn
 import torch.nn.functional as F
+from transformers import BertConfig
+
+print("[+] in bert_midi")
+
 class BertMidi(nn.Module):
     PRE_TRAINED_MODEL_NAME = 'bert-base-cased'
     MAX_INPUT_LENGTH = 510 #self.bert.config.max_position_embeddings
 
     def __init__(self, n_classes = 2):
         super().__init__()
-        self.bert = BertModel.from_pretrained(BertMidi.PRE_TRAINED_MODEL_NAME)
+        # self.bert = BertModel.from_pretrained(BertMidi.PRE_TRAINED_MODEL_NAME) #! this is the line that causes docker to not run
+        self.bert = BertModel(config = BertConfig.from_json_file('models/Velocity_assigner/config.json')) 
         self.drop = nn.Dropout(p=0.3)
-        # self.l1 = [nn.Linear(self.bert.config.hidden_size , 1) for _ in range(MAX_INPUT_LENGTH)]
         self.l1 = nn.Linear(self.bert.config.hidden_size*BertMidi.MAX_INPUT_LENGTH , BertMidi.MAX_INPUT_LENGTH) 
 
 

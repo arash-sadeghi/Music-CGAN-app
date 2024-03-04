@@ -22,9 +22,12 @@ you should be able to see the app running.
 - docker inspect --format='{{.Size}}' flask-app-no-torch
 ### Azure commands:
 -  docker build -t drummercompanion.azurecr.io/drummercompanion  .
--  docker push drummercompanion.azurecr.io/drummercompanion.
+-  docker push drummercompanion.azurecr.io/drummercompanion
 - update docker image on azure: [link](https://stackoverflow.com/questions/57241655/switch-docker-image-in-azure-appservice)
 ### progress
 - 'Transformer assigns velocity successfully. Now integration part should be done. models weights too big for adding to git'
 - modifying CGAN to only output drum midi. The whole app will work as such. no more returning bass
 - CGAN might be clipping the end of songs. must be checked
+- __pycahce__ was geeting copied to docker. that was consuming space and throwing low disk space warning
+    - /usr/local/lib/python3.11/site-packages/huggingface_hub/file_download.py:1006: UserWarning: Not enough free disk space to download the file. The expected file size is: 0.00 MB. The target location /root/.cache/huggingface/hub only has 0.00 MB free disk space.
+
