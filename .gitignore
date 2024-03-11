@@ -4,7 +4,8 @@ static/data/
 models/__pycache__/*
 *.midi
 *.npz
-static/
+static/midi/
+static/data/
 **/__pycache__/*
 models/Velocity_assigner/weights_1500.pts
 .vscode/
