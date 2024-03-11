@@ -9,21 +9,23 @@ body, h1, p, form {
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     /* background: linear-gradient(to bottom right, #9dcce9, #f09898); */
-    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-  }
-  
-  .container {
+
     background-image: url("../static/background.png"); /* Path to your background image */
     background-size: cover;
     background-position: center;
+
+  }
+  
+  .container {
   }
   
   .content {
-    background-color: #fff;
+    /* background-color: #fff; */
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
     border-radius: 10px;
     padding: 30px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
