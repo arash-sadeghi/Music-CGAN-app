@@ -43,11 +43,11 @@ class Predictor:
 
         m = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
         #! save music to npz -> midi
-        m.save('static/data/generated_drum.npz')
-        tmp = pypianoroll.load('static/data/generated_drum.npz')
-        tmp.write('static/data/generated_drum.midi')
+        m.save('static/generated_drum.npz')
+        tmp = pypianoroll.load('static/generated_drum.npz')
+        tmp.write('static/generated_drum.midi')
 
-        return 'static/data/generated_drum.midi'
+        return 'static/generated_drum.midi'
 
 # p = Predictor()
 # t1 = p.generate_drum('models/full_dataset_instance_cleaned-Contrabass,_Bass.mid')
