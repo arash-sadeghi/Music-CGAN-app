@@ -16,7 +16,7 @@ from models.Predict import Predictor
 from models.Velocity_assigner.assign_velocity import VelocityAssigner
 
 predictor = Predictor()
-va = VelocityAssigner()
+# va = VelocityAssigner()
 
 #Save images to the 'static' folder as Flask serves images from this directory
 UPLOAD_FOLDER = 'static/midi/'
@@ -74,8 +74,10 @@ def submit_file():
             checkbox_value = request.form.get('assing-velocity', None)
 
             if checkbox_value == 'on':
-                print('[+] calculating velocities')
-                va.assing_velocity2midi(res_path) #! overwrites the given drum midi file
+                # print('[+] calculating velocities')
+                # va.assing_velocity2midi(res_path) #! overwrites the given drum midi file
+                print('[+] velocity assigner disabled')
+
 
             label = "Drum successfully generated"
             flash(label)
