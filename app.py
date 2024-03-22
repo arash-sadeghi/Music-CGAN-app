@@ -16,7 +16,7 @@ from models.Predict import Predictor
 from models.Velocity_assigner.assign_velocity import VelocityAssigner
 
 predictor = Predictor()
-va = VelocityAssigner()
+# va = VelocityAssigner()
 
 #Save images to the 'static' folder as Flask serves images from this directory
 UPLOAD_FOLDER = 'static/midi/'
@@ -75,7 +75,7 @@ def submit_file():
 
             if checkbox_value == 'on':
                 print('[+] calculating velocities')
-                va.assing_velocity2midi(res_path) #! overwrites the given drum midi file
+                # va.assing_velocity2midi(res_path) #! overwrites the given drum midi file
 
             label = "Drum successfully generated"
             flash(label)
@@ -104,7 +104,7 @@ def download_file():
 
 if __name__ == "__main__":
     print("[+] RUNNING")
-    # port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
-    # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
-    app.run()
+    port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
+    app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
+    # app.run()
 

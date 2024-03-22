@@ -1,10 +1,10 @@
 FROM python:3.11.5
+RUN git clone https://github.com/arash-sadeghi/Music-CGAN-app.git /app
+RUN ls
 WORKDIR /app
-RUN git clone https://github.com/arash-sadeghi/Music-CGAN-app.git
-RUN cd Music-CGAN-app 
 RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
-RUN ./file_downloader.sh
+# RUN wget -O models/Velocity_assigner/weights_1500.pts "$(cat BERT_download_link.txt)"
 EXPOSE 3009
 CMD ["python", "app.py"]
