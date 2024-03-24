@@ -1,7 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
-from models.CONST_VARS import CONST
+# from models.CONST_VARS import CONST
+from CONST_VARS import CONST
+
 class GeneraterBlock(nn.Module):
     def __init__(self, in_dim, out_dim, kernel, stride ,output_padding = 0):
         super().__init__()
