@@ -1,3 +1,9 @@
+## TODO:
+- play with buffer size
+- code quits after a time window ends. you need to recall again and make windows overlap. each added note should carry previous notes with itself (to a certain time)
+- drummer will always generate drum for previous track. How to make a catch up dynamic.
+ 
+
 ## How to run locally
 - these instructions are for Macos operating system.
 - first go ahead and istall docker from this website: https://docs.docker.com/desktop/install/mac-install/
