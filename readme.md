@@ -1,3 +1,5 @@
+## Notes
+- for logic pro drum note mapping must be checked. Some notes does not exist in a typical drumkit in logi pro
 ## How to run locally
 - these instructions are for Macos operating system.
 - first go ahead and istall docker from this website: https://docs.docker.com/desktop/install/mac-install/

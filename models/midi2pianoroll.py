@@ -9,7 +9,8 @@ import time
 import pretty_midi
 import rtmidi
 import pypianoroll
-# from mido import MidiFile, MidiPort
+
+
 midi_filename = 'received_messages_pm.mid'
 MIDI_INPUT_PORT = 'IAC Driver Bus 1'
 TIME_WINDOW = 17 #! 10 is not enough
@@ -22,15 +23,7 @@ def listen4midi():
     pm_data = pretty_midi.PrettyMIDI()  # Create empty PrettyMIDI object
     bass = pretty_midi.Instrument(program=33) #! 33 is bass program code. got from CGAN repo
 
-    midi_in = rtmidi.MidiIn()
-    available_ports = midi_in.get_ports()
-    if MIDI_INPUT_PORT not in available_ports:
-        print(f"Virtual MIDI Port not found. Available ports: {available_ports}")
-        return
-    midi_in.open_port(available_ports.index(MIDI_INPUT_PORT))
-
-
-    with mido.open_input() as port:
+    with mido.open_input(MIDI_INPUT_PORT) as port:
         start_time = time.time()
         end_time = start_time + TIME_WINDOW  # Listen for 10 seconds
         ons = {} #* this dictionary enables us to capture cords
@@ -65,10 +58,12 @@ def midi_to_piano_roll(midi_file_path = '',midi_data=None):
 
     if midi_data is None: 
         midi_data = pretty_midi.PrettyMIDI(midi_file_path)
-    multi_track = pypianoroll.from_pretty_midi(midi_data)
+    else:
+        midi_data.time_signature_changes.append(pretty_midi.TimeSignature(numerator=4,denominator=4,time=0))
+    multi_track = pypianoroll.from_pretty_midi(midi_data,algorithm='strict')
     multi_track.set_resolution(CONST.beat_resolution) 
-    # multi_track.binarize()
+    multi_track.binarize()
     piano_roll = multi_track.stack()
-
+    multi_track.write("debug_from_midi_to_piano_roll.midi")
     return piano_roll.squeeze() , multi_track.tempo
 

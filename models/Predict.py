@@ -10,21 +10,61 @@ from CONST_VARS import CONST
 import torch
 import numpy as np 
 import os 
-from pypianoroll import Multitrack, Track
+from pypianoroll import Multitrack, Track, BinaryTrack
 import pypianoroll 
 
+import pretty_midi
+import mido
+import rtmidi
+from time import time
+
+import threading
+import queue
+
+MIDI_OUT_PORT = 'IAC Driver Bus 2'
+midi_filename = 'received_messages_pm.mid'
+MIDI_INPUT_PORT = 'IAC Driver Bus 1'
+TIME_WINDOW = 10
 class Predictor:
     def __init__(self) -> None:
         self.generator = Generator()
         self.generator.load_state_dict(torch.load('models/training_output_path_rootgenerator_20000.pth'))
         self.generator.eval() #! this solve error thrown by data length
+        self.stop_listening = False
+
+        self.midi_port_out = mido.open_output(MIDI_OUT_PORT)
+        self.midi_port_in = mido.open_input(MIDI_INPUT_PORT)
+        self.lock = threading.Lock()
+        self.processing_queue = queue.Queue()
+        self.processing_thread = threading.Thread(target=self.publish_midi)
+        self.processing_thread.start()
+
     
-    def generate_drum(self,bass_url = ''):
+    def generate_drum(self, bass_piano_roll, tempo_array, bass_url = ''):
         # bass_piano_roll , tempo_array = midi_to_piano_roll(bass_url)
-        bass_piano_roll , tempo_array = listen4midi()
+        # bass_piano_roll , tempo_array = listen4midi()
+        #TODO what is 64 here?
+        print(f"[+][GENERATor] before bass_piano_roll shape {bass_piano_roll.shape}")
+
+        pad_size = 64 - bass_piano_roll.shape[0]%64
+        pad = np.zeros((pad_size , bass_piano_roll.shape[1]))
+        bass_piano_roll = np.concatenate((bass_piano_roll,pad),axis=0)
+
+        #! check to see if there were any out iof range pitch
+        illegal_pitches_up = bass_piano_roll[:,:CONST.lowest_pitch]
+        illegal_pitches_down = bass_piano_roll[:,CONST.lowest_pitch + CONST.n_pitches:]
+        if not np.all(illegal_pitches_up == 0) :
+            print("[-] Illegal up note")
+        if not np.all(illegal_pitches_down == 0) :
+            print("[-] Illegal down note")
+
         bass_piano_roll = torch.tensor(bass_piano_roll)
-        bass_piano_roll = bass_piano_roll[:,CONST.lowest_pitch:CONST.lowest_pitch + CONST.n_pitches] #! not sure if this corresponds to same range as generator pitch
-        bass_piano_roll = bass_piano_roll[0:bass_piano_roll.shape[0]//64*64,:].view(-1,64,72)
+        bass_piano_roll = bass_piano_roll[:,CONST.lowest_pitch:CONST.lowest_pitch + CONST.n_pitches] #* safge
+
+
+
+        bass_piano_roll = bass_piano_roll.view(-1,64,72) #TODO clipping input size
+
 
         latent = torch.randn(bass_piano_roll.shape[0], CONST.latent_dim)
         
@@ -39,22 +79,114 @@ class Predictor:
         # temp = res.detach().numpy().transpose(1,0,2,3)
         temp = temp.reshape(temp.shape[0] , temp.shape[1] * temp.shape[2] , temp.shape[3])
 
+        #! removing padding
+        temp = temp[:, 0:temp.shape[1]-pad_size ,:]
+
+        print(f"[+][GENERATor] after bass_piano_roll shape {temp[1].shape}")
+
+
         tracks = []
         # for idx, (program, is_drum, track_name) in enumerate(zip([0], [True], ['Drum'])):
 
         for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
             # pianoroll = np.pad(np.concatenate(data[:4], 1)[idx], ((0, 0), (lowest_pitch, 128 - lowest_pitch - n_pitches)))
             pianoroll = np.pad(temp[idx] > 0.5,((0, 0), (CONST.lowest_pitch, 128 - CONST.lowest_pitch - CONST.n_pitches)))
-            tracks.append(Track(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
+            tracks.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
 
-        m = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
-        #! save music to npz -> midi
-        m.save('static/generated_drum.npz')
-        tmp = pypianoroll.load('static/generated_drum.npz')
-        tmp.write('static/generated_drum.midi')
+        multi_track = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
+        drum_midi = multi_track.to_pretty_midi()
+        drum_midi.write('static/generated_drum.midi')
+        return drum_midi
+    
+    def publish_midi(self):
+        while not self.stop_listening :
+            publish_duration = time()
+            if self.processing_queue.qsize() == 0:
+                continue
+            pretty_midi_messages = self.processing_queue.get()  # Get messages from the queue
+            self.processing_queue.task_done()  # Mark the task as done
 
-        return 'static/generated_drum.midi'
+            # pretty_midi_messages = pretty_midi.PrettyMIDI('test.midi')
+            drum = None
+            for instrument in pretty_midi_messages.instruments:
+                if instrument.is_drum: #TODO debug
+                    drum = instrument
+                    break
+            
+            assert not (drum is None)
 
+            # start_time = time()
+            #     passed_time = time() - start_time
+            mido_messages = []
+            for note in drum.notes:
+                mido_messages.append(mido.Message('note_on', note=note.pitch, velocity=note.velocity, time = note.start))
+                mido_messages.append(mido.Message('note_off', note=note.pitch, velocity=0,time=note.end))
+
+            mido_messages_sorted = sorted(mido_messages, key=lambda x: x.time)
+            midi_duration = mido_messages_sorted[-1].time
+            print(f"[+][PUBLISHER] MIDI duration {midi_duration} and number of midi messages {len(mido_messages_sorted)}")
+            start_time = time()
+            passed_time = time() - start_time
+            message_counter = 0
+            while passed_time <= TIME_WINDOW:
+                passed_time = time() - start_time
+                if mido_messages_sorted[message_counter].time - passed_time <=0.001:
+                    self.midi_port_out.send(mido_messages_sorted[message_counter])
+                    # print(f"[+][PUBLISHER] on time {passed_time} Sent {mido_messages_sorted[message_counter]}")
+                    message_counter +=1
+                if message_counter >= len(mido_messages_sorted):
+                    break
+
+            print(f"[+][PUBLISHER] publishing duration {time()- publish_duration}")
+    
+    def listen(self):
+        listen_start_time = time()
+        pm_data = pretty_midi.PrettyMIDI()  # Create empty PrettyMIDI object
+        bass = pretty_midi.Instrument(program=33) #! 33 is bass program code. got from CGAN repo
+        start_time = time()
+        end_time = start_time + TIME_WINDOW  # Listen for 10 seconds
+        ons = {} #* this dictionary enables us to capture cords
+        for message in self.midi_port_in:
+            # print(f"[+][Listener] on time {time()-start_time} message {message}")
+            if time() >= end_time:
+                break
+            # track.append(message)
+            elif message.type == 'note_on':
+                note_beg = time() - start_time
+                ons[str(message.note)] = note_beg
+
+            elif message.type == 'note_off':
+                if str(message.note) in ons.keys():
+                    note_end = time() - start_time
+                    note = pretty_midi.Note(
+                        velocity=message.velocity, #! this is not accurate becuse note on and note off velocities are different
+                        pitch=message.note,
+                        start=ons[str(message.note)],
+                        end=note_end
+                        )
+
+                    bass.notes.append(note)  # Append note to first instrument
+
+        pm_data.instruments.append(bass)
+        print(f"[+][Listener] number of midi messages listener received {len(bass.notes)} listening duration {time()-listen_start_time}")
+        pm_data.write("debug_listened_midi.midi") #* no problem here
+        return midi_to_piano_roll(midi_data = pm_data) #! problem
+
+    def real_time_loop(self):
+        while not self.stop_listening :
+            print("[+] listening to bass")
+            piano_roll , tempo = self.listen()
+
+            print("[+] generating drum")
+            drum_midi = self.generate_drum(piano_roll , tempo)
+
+            print("[+] sent to publish in queue")
+            self.processing_queue.put(drum_midi)
+
+
+
+        
 if __name__ == '__main__':
     p = Predictor()
-    t1 = p.generate_drum()
+    # t1 = p.generate_drum()
+    p.real_time_loop()
