@@ -1,5 +1,10 @@
 ## Notes
 - for logic pro drum note mapping must be checked. Some notes does not exist in a typical drumkit in logi pro
+- from listening to publishing processing time takes approximately 0.5s for window of 10s and 0.7s for window of 20s
+- The main time difference error was happening from function pypianoroll.from_pretty_midi because without time signiture, it didn't know where is the begginging of midi
+- When we add zero padding to music to make it of size 64, the zero padding will affect the last bit of music and always music at the padding part sounds like it is about to end.
+    so zero padding affects generated music. will try repeating last session. the time window will have different number of notes inside it each time becauseit depends how many note
+    were played in that time frame. Still, measure length should be a function of tempo and rythm.
 ## How to run locally
 - these instructions are for Macos operating system.
 - first go ahead and istall docker from this website: https://docs.docker.com/desktop/install/mac-install/

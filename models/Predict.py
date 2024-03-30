@@ -3,28 +3,24 @@
 # from models.CONST_VARS import CONST
 
 from Generator import Generator
-from midi2pianoroll import midi_to_piano_roll , listen4midi
+from midi2pianoroll import midi_to_piano_roll 
 from CONST_VARS import CONST
-
+import matplotlib.pyplot as plt
 
 import torch
 import numpy as np 
-import os 
-from pypianoroll import Multitrack, Track, BinaryTrack
-import pypianoroll 
+from pypianoroll import Multitrack, BinaryTrack
 
 import pretty_midi
 import mido
-import rtmidi
 from time import time
 
 import threading
 import queue
 
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
-midi_filename = 'received_messages_pm.mid'
 MIDI_INPUT_PORT = 'IAC Driver Bus 1'
-TIME_WINDOW = 10
+TIME_WINDOW = 20
 class Predictor:
     def __init__(self) -> None:
         self.generator = Generator()
@@ -42,15 +38,15 @@ class Predictor:
     
     def generate_drum(self, bass_piano_roll, tempo_array, bass_url = ''):
         # bass_piano_roll , tempo_array = midi_to_piano_roll(bass_url)
-        # bass_piano_roll , tempo_array = listen4midi()
         #TODO what is 64 here?
-        print(f"[+][GENERATor] before bass_piano_roll shape {bass_piano_roll.shape}")
-
+        #* padding to make output size divident of 64
         pad_size = 64 - bass_piano_roll.shape[0]%64
-        pad = np.zeros((pad_size , bass_piano_roll.shape[1]))
+        # pad = np.zeros((pad_size , bass_piano_roll.shape[1])) #* zero padding which affects the generated music
+        pad = bass_piano_roll[bass_piano_roll.shape[0]-pad_size: , :] #* padding with copying last frame
         bass_piano_roll = np.concatenate((bass_piano_roll,pad),axis=0)
+        # bass_piano_roll = bass_piano_roll[:bass_piano_roll.shape[0]//64*64,:] #* no padding and cutting the excess part. Will generate better results but input and output are not of same size
 
-        #! check to see if there were any out iof range pitch
+        #* check to see if there were any out iof range pitch
         illegal_pitches_up = bass_piano_roll[:,:CONST.lowest_pitch]
         illegal_pitches_down = bass_piano_roll[:,CONST.lowest_pitch + CONST.n_pitches:]
         if not np.all(illegal_pitches_up == 0) :
@@ -59,15 +55,10 @@ class Predictor:
             print("[-] Illegal down note")
 
         bass_piano_roll = torch.tensor(bass_piano_roll)
-        bass_piano_roll = bass_piano_roll[:,CONST.lowest_pitch:CONST.lowest_pitch + CONST.n_pitches] #* safge
-
-
-
-        bass_piano_roll = bass_piano_roll.view(-1,64,72) #TODO clipping input size
-
+        bass_piano_roll = bass_piano_roll[:,CONST.lowest_pitch:CONST.lowest_pitch + CONST.n_pitches] 
+        bass_piano_roll = bass_piano_roll.view(-1,64,72)
 
         latent = torch.randn(bass_piano_roll.shape[0], CONST.latent_dim)
-        
         latent = latent.type(torch.float32)
         bass_piano_roll = bass_piano_roll.type(torch.float32)
 
@@ -76,20 +67,17 @@ class Predictor:
         #* reshaping data inorder to be saved as image
         temp = torch.cat((res.cpu().detach(),bass_piano_roll.unsqueeze(1)),axis = 1).numpy()
         temp = temp.transpose(1,0,2,3)
-        # temp = res.detach().numpy().transpose(1,0,2,3)
         temp = temp.reshape(temp.shape[0] , temp.shape[1] * temp.shape[2] , temp.shape[3])
 
-        #! removing padding
+        #* removing padding
         temp = temp[:, 0:temp.shape[1]-pad_size ,:]
+
+        # plt.imshow(temp[1])
 
         print(f"[+][GENERATor] after bass_piano_roll shape {temp[1].shape}")
 
-
         tracks = []
-        # for idx, (program, is_drum, track_name) in enumerate(zip([0], [True], ['Drum'])):
-
         for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
-            # pianoroll = np.pad(np.concatenate(data[:4], 1)[idx], ((0, 0), (lowest_pitch, 128 - lowest_pitch - n_pitches)))
             pianoroll = np.pad(temp[idx] > 0.5,((0, 0), (CONST.lowest_pitch, 128 - CONST.lowest_pitch - CONST.n_pitches)))
             tracks.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
 
@@ -128,6 +116,7 @@ class Predictor:
             start_time = time()
             passed_time = time() - start_time
             message_counter = 0
+            print(f"[+][PUBLISHER] from listening to publishing took {time()-self.process_begin_time}")
             while passed_time <= TIME_WINDOW:
                 passed_time = time() - start_time
                 if mido_messages_sorted[message_counter].time - passed_time <=0.001:
@@ -167,14 +156,15 @@ class Predictor:
 
                     bass.notes.append(note)  # Append note to first instrument
 
+        self.process_begin_time = time()
         pm_data.instruments.append(bass)
         print(f"[+][Listener] number of midi messages listener received {len(bass.notes)} listening duration {time()-listen_start_time}")
-        pm_data.write("debug_listened_midi.midi") #* no problem here
+        pm_data.write("static/midi/debug/debug_listened_midi.midi") #* no problem here
         return midi_to_piano_roll(midi_data = pm_data) #! problem
 
     def real_time_loop(self):
         while not self.stop_listening :
-            print("[+] listening to bass")
+            print(f"[+] listening to bass for {TIME_WINDOW} seconds")
             piano_roll , tempo = self.listen()
 
             print("[+] generating drum")
