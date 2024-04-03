@@ -3,7 +3,7 @@
 # from models.CONST_VARS import CONST
 
 from Generator import Generator
-from midi2pianoroll import midi_to_piano_roll 
+from midi2pianoroll import midi_to_piano_roll , plot_multitrack
 from CONST_VARS import CONST
 import matplotlib.pyplot as plt
 
@@ -13,31 +13,31 @@ from pypianoroll import Multitrack, BinaryTrack
 
 import pretty_midi
 import mido
-from time import time
+from time import time , ctime
 
 import threading
 import queue
+
+import os
 
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
 MIDI_INPUT_PORT = 'IAC Driver Bus 1'
 TIME_WINDOW = 20
 class Predictor:
+    # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
+    WEIGHT_PATH = 'models\generator_800.pth'
+    GENRE = 'Pop_Rock' #'Latin' #
+    EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
+    SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
     def __init__(self) -> None:
         self.generator = Generator()
-        self.generator.load_state_dict(torch.load('models/training_output_path_rootgenerator_20000.pth'))
+        self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH))
         self.generator.eval() #! this solve error thrown by data length
-        self.stop_listening = False
-
-        self.midi_port_out = mido.open_output(MIDI_OUT_PORT)
-        self.midi_port_in = mido.open_input(MIDI_INPUT_PORT)
-        self.lock = threading.Lock()
-        self.processing_queue = queue.Queue()
-        self.processing_thread = threading.Thread(target=self.publish_midi)
-        self.processing_thread.start()
 
     
-    def generate_drum(self, bass_piano_roll, tempo_array, bass_url = ''):
-        # bass_piano_roll , tempo_array = midi_to_piano_roll(bass_url)
+    def generate_drum(self, bass_piano_roll = None, tempo_array = None, bass_url = None):
+        if not bass_url is None:
+            bass_piano_roll , tempo_array = midi_to_piano_roll(bass_url)
         #TODO what is 64 here?
         #* padding to make output size divident of 64
         pad_size = 64 - bass_piano_roll.shape[0]%64
@@ -62,7 +62,8 @@ class Predictor:
         latent = latent.type(torch.float32)
         bass_piano_roll = bass_piano_roll.type(torch.float32)
 
-        res = self.generator(latent,bass_piano_roll)
+        genre_tensor = torch.tensor(CONST.genre_code[Predictor.GENRE]).repeat((bass_piano_roll.shape[0])) #* repeat to the size of samples
+        res = self.generator(latent,bass_piano_roll,genre_tensor)
 
         #* reshaping data inorder to be saved as image
         temp = torch.cat((res.cpu().detach(),bass_piano_roll.unsqueeze(1)),axis = 1).numpy()
@@ -82,8 +83,9 @@ class Predictor:
             tracks.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
 
         multi_track = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
+        plot_multitrack(multi_track , Predictor.SAVE_PATH+'.png')
         drum_midi = multi_track.to_pretty_midi()
-        drum_midi.write('static/generated_drum.midi')
+        drum_midi.write(Predictor.SAVE_PATH+'.midi')
         return drum_midi
     
     def publish_midi(self):
@@ -163,6 +165,14 @@ class Predictor:
         return midi_to_piano_roll(midi_data = pm_data) #! problem
 
     def real_time_loop(self):
+        self.stop_listening = False
+        self.midi_port_out = mido.open_output(MIDI_OUT_PORT)
+        self.midi_port_in = mido.open_input(MIDI_INPUT_PORT)
+        self.lock = threading.Lock()
+        self.processing_queue = queue.Queue()
+        self.processing_thread = threading.Thread(target=self.publish_midi)
+        self.processing_thread.start()
+
         while not self.stop_listening :
             print(f"[+] listening to bass for {TIME_WINDOW} seconds")
             piano_roll , tempo = self.listen()
@@ -178,5 +188,6 @@ class Predictor:
         
 if __name__ == '__main__':
     p = Predictor()
-    # t1 = p.generate_drum()
-    p.real_time_loop()
+    # t1 = p.generate_drum(bass_url = 'E:\Arash Workdir\Music-CGAN-app\static\\full_dataset_instance_cleaned-Contrabass_Bass.mid')
+    t1 = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
+    # p.real_time_loop()
