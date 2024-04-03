@@ -1,4 +1,11 @@
+## Todo
+- [ ] make generator run on gpu if it finds it avaible
+- [ ] decide if docker will be used
+    - [ ] transport midi ports to docker
+- [ ] remember relative library imports
+- [ ] try using velocity assigner in real-time application
 ## Notes
+- generator function works both with files or given bass and tempo. Genre is kept fixed during the whole session
 - for logic pro drum note mapping must be checked. Some notes does not exist in a typical drumkit in logi pro
 - from listening to publishing processing time takes approximately 0.5s for window of 10s and 0.7s for window of 20s
 - The main time difference error was happening from function pypianoroll.from_pretty_midi because without time signiture, it didn't know where is the begginging of midi
