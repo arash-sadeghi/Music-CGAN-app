@@ -25,7 +25,8 @@ MIDI_INPUT_PORT = 'IAC Driver Bus 1'
 TIME_WINDOW = 20
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
-    WEIGHT_PATH = 'models\generator_800.pth'
+    # WEIGHT_PATH = 'models\generator_800.pth'
+    WEIGHT_PATH = 'models\generator_1600.pth'
     GENRE = 'Pop_Rock' #'Latin' #
     EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
     SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
@@ -83,7 +84,7 @@ class Predictor:
             tracks.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
 
         multi_track = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
-        plot_multitrack(multi_track , Predictor.SAVE_PATH+'.png')
+        plot_multitrack(multi_track.copy() , Predictor.SAVE_PATH+'.png')
         drum_midi = multi_track.to_pretty_midi()
         drum_midi.write(Predictor.SAVE_PATH+'.midi')
         return drum_midi
