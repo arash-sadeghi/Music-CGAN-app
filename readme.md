@@ -1,3 +1,5 @@
+## important: 
+- velocity assigner changes drum midi pitches
 ## Todo
 - [ ] make generator run on gpu if it finds it avaible
 - [ ] decide if docker will be used

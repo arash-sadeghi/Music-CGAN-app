@@ -20,13 +20,15 @@ import queue
 
 import os
 
+from Velocity_assigner.assign_velocity import VelocityAssigner
+
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
 MIDI_INPUT_PORT = 'IAC Driver Bus 1'
 TIME_WINDOW = 20
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
-    WEIGHT_PATH = 'models\generator_1600.pth'
+    WEIGHT_PATH = 'models\generator_19900.pth'
     GENRE = 'Pop_Rock' #'Latin' #
     EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
     SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
@@ -79,15 +81,27 @@ class Predictor:
         print(f"[+][GENERATor] after bass_piano_roll shape {temp[1].shape}")
 
         tracks = []
+        drum_track = []
         for idx, (program, is_drum, track_name) in enumerate(zip([0,33], [True,False], ['Drum','Bass'])):
             pianoroll = np.pad(temp[idx] > 0.5,((0, 0), (CONST.lowest_pitch, 128 - CONST.lowest_pitch - CONST.n_pitches)))
             tracks.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
 
+            if track_name == 'Drum':
+                drum_track.append(BinaryTrack(name=track_name,program=program,is_drum=is_drum,pianoroll=pianoroll))
+
+
         multi_track = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
+        multi_track_drum = Multitrack(tracks=drum_track,tempo=tempo_array,resolution=CONST.beat_resolution)
+
         plot_multitrack(multi_track.copy() , Predictor.SAVE_PATH+'.png')
-        drum_midi = multi_track.to_pretty_midi()
-        drum_midi.write(Predictor.SAVE_PATH+'.midi')
-        return drum_midi
+        DB_midi = multi_track.to_pretty_midi()
+        output_midi_name = Predictor.SAVE_PATH+'DB.midi'
+        DB_midi.write(output_midi_name)
+
+        output_midi_drum_name = Predictor.SAVE_PATH+'D.midi'
+        multi_track_drum.to_pretty_midi().write(output_midi_drum_name)
+
+        return DB_midi , output_midi_name , output_midi_drum_name
     
     def publish_midi(self):
         while not self.stop_listening :
@@ -185,10 +199,23 @@ class Predictor:
             self.processing_queue.put(drum_midi)
 
 
+def replace_drum(DB_path, D_path, output_path, vels):
+    DB = pretty_midi.PrettyMIDI(DB_path)
+    D = pretty_midi.PrettyMIDI(D_path)
+    # D.set_resolution
+    # DB.instruments[0] = D.instruments[0]
+    for note_counter in range(len(DB.instruments[0].notes)):
+        DB.instruments[0].notes[note_counter].velocity = vels[note_counter]
+    DB.write('velocity_assigned_.midi')
+    print('hi')
 
-        
+
 if __name__ == '__main__':
     p = Predictor()
     # t1 = p.generate_drum(bass_url = 'E:\Arash Workdir\Music-CGAN-app\static\\full_dataset_instance_cleaned-Contrabass_Bass.mid')
-    t1 = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
+    t1 , DB_path , D_path = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
+    va = VelocityAssigner()
+    drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
+    DB_with_vel_path = 'DB_with_vel.midi'
+    replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
     # p.real_time_loop()
