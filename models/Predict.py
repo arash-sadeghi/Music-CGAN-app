@@ -23,18 +23,20 @@ import os
 from Velocity_assigner.assign_velocity import VelocityAssigner
 
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
-MIDI_INPUT_PORT = 'IAC Driver Bus 1'
+MIDI_INPUT_PORT = 'Oxygen 61'
 TIME_WINDOW = 20
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
-    WEIGHT_PATH = 'models\generator_19900.pth'
+    # WEIGHT_PATH = os.path.join('models','generator_19900.pth')
+    WEIGHT_PATH = os.path.join('models','generator_weights.pth')
+    # WEIGHT_PATH = os.path.join('models','training_output_path_rootgenerator_20000.pth')
     GENRE = 'Pop_Rock' #'Latin' #
     EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
     SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
     def __init__(self) -> None:
         self.generator = Generator()
-        self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH))
+        self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH , map_location=torch.device('cpu')))
         self.generator.eval() #! this solve error thrown by data length
 
     
@@ -193,7 +195,7 @@ class Predictor:
             piano_roll , tempo = self.listen()
 
             print("[+] generating drum")
-            drum_midi = self.generate_drum(piano_roll , tempo)
+            drum_midi , _ , _ = self.generate_drum(piano_roll , tempo)
 
             print("[+] sent to publish in queue")
             self.processing_queue.put(drum_midi)
@@ -213,9 +215,11 @@ def replace_drum(DB_path, D_path, output_path, vels):
 if __name__ == '__main__':
     p = Predictor()
     # t1 = p.generate_drum(bass_url = 'E:\Arash Workdir\Music-CGAN-app\static\\full_dataset_instance_cleaned-Contrabass_Bass.mid')
-    t1 , DB_path , D_path = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
-    va = VelocityAssigner()
-    drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
-    DB_with_vel_path = 'DB_with_vel.midi'
-    replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
-    # p.real_time_loop()
+
+    # t1 , DB_path , D_path = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
+    # va = VelocityAssigner()
+    # drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
+    # DB_with_vel_path = 'DB_with_vel.midi'
+    # replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
+
+    p.real_time_loop()
