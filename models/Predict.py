@@ -23,8 +23,9 @@ import os
 from Velocity_assigner.assign_velocity import VelocityAssigner
 
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
-MIDI_INPUT_PORT = 'Oxygen 61'
-TIME_WINDOW = 20
+# MIDI_INPUT_PORT = 'Oxygen 61'
+MIDI_INPUT_PORT = 'A-PRO 1'
+TIME_WINDOW = 30
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
