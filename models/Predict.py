@@ -25,7 +25,8 @@ from Velocity_assigner.assign_velocity import VelocityAssigner
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
 # MIDI_INPUT_PORT = 'Oxygen 61'
 MIDI_INPUT_PORT = 'A-PRO 1'
-TIME_WINDOW = 30
+# MIDI_INPUT_PORT = 'IAC Driver Bus 1'
+TIME_WINDOW = 20
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
@@ -37,7 +38,7 @@ class Predictor:
     SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
     def __init__(self) -> None:
         self.generator = Generator()
-        self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH , map_location=torch.device('cpu')))
+        self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH , map_location=torch.device('cpu'))) #TODO specific to cpu machine only
         self.generator.eval() #! this solve error thrown by data length
 
     
@@ -74,6 +75,10 @@ class Predictor:
         #* reshaping data inorder to be saved as image
         temp = torch.cat((res.cpu().detach(),bass_piano_roll.unsqueeze(1)),axis = 1).numpy()
         temp = temp.transpose(1,0,2,3)
+
+        #TODO test: filling process time by repeating last measures
+        temp = np.concatenate((temp,temp[:,-1:,:,:]),axis=1)
+
         temp = temp.reshape(temp.shape[0] , temp.shape[1] * temp.shape[2] , temp.shape[3])
 
         #* removing padding
@@ -137,7 +142,9 @@ class Predictor:
             passed_time = time() - start_time
             message_counter = 0
             print(f"[+][PUBLISHER] from listening to publishing took {time()-self.process_begin_time}")
-            while passed_time <= TIME_WINDOW:
+            #TODO bypassing while time check to allow generation of drum more than time window for jamming test purpose
+            # while passed_time <= TIME_WINDOW:
+            while True:
                 passed_time = time() - start_time
                 if mido_messages_sorted[message_counter].time - passed_time <=0.001:
                     self.midi_port_out.send(mido_messages_sorted[message_counter])
@@ -146,7 +153,7 @@ class Predictor:
                 if message_counter >= len(mido_messages_sorted):
                     break
 
-            print(f"[+][PUBLISHER] publishing duration {time()- publish_duration}")
+            print(f"[+][PUBLISHER] publishing duration ----> {time()- publish_duration}")
     
     def listen(self):
         listen_start_time = time()
