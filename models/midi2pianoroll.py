@@ -23,7 +23,7 @@ def plot_multitrack(multitrack,path):
 
 def keep_bass_only(midi):
     for instr in midi.instruments:
-        if instr.name == "Bass":
+        if "Bass" in instr.name:
             midi.instruments = [instr]
             return midi
 

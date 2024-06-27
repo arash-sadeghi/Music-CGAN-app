@@ -26,7 +26,7 @@ MIDI_OUT_PORT = 'IAC Driver Bus 2'
 # MIDI_INPUT_PORT = 'Oxygen 61'
 MIDI_INPUT_PORT = 'A-PRO 1'
 # MIDI_INPUT_PORT = 'IAC Driver Bus 1'
-TIME_WINDOW = 20
+TIME_WINDOW = 10
 class Predictor:
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
@@ -216,8 +216,7 @@ def replace_drum(DB_path, D_path, output_path, vels):
     # DB.instruments[0] = D.instruments[0]
     for note_counter in range(len(DB.instruments[0].notes)):
         DB.instruments[0].notes[note_counter].velocity = vels[note_counter]
-    DB.write('velocity_assigned_.midi')
-    print('hi')
+    DB.write(output_path)
 
 
 if __name__ == '__main__':
@@ -225,9 +224,14 @@ if __name__ == '__main__':
     # t1 = p.generate_drum(bass_url = 'E:\Arash Workdir\Music-CGAN-app\static\\full_dataset_instance_cleaned-Contrabass_Bass.mid')
 
     # t1 , DB_path , D_path = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
-    # va = VelocityAssigner()
-    # drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
-    # DB_with_vel_path = 'DB_with_vel.midi'
-    # replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
+    # t1 , DB_path , D_path = p.generate_drum(bass_url = '/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/ASProject.mid')
+    va = VelocityAssigner()
+    # D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/offline_drum.midi"
+    # DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/generated_drum_Pop_Rock_Fri_May_17_01_18_42_2024DB.midi"
+    D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum of given LPD bass D.midi"
+    DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum with given bass.midi"
+    drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
+    DB_with_vel_path = 'LPD_DB_with_vel.midi'
+    replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
 
-    p.real_time_loop()
+    # p.real_time_loop()
