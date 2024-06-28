@@ -13,7 +13,9 @@ from werkzeug.utils import secure_filename
 from models.Predict import Predictor
 import os
 from models.Predict import Predictor
-from models.Velocity_assigner.assign_velocity import VelocityAssigner
+# from models.Velocity_assigner.assign_velocity import VelocityAssigner
+
+import flaskwebgui
 
 predictor = Predictor()
 # va = VelocityAssigner()
@@ -23,6 +25,7 @@ UPLOAD_FOLDER = 'static/'
 
 #Create an app object using the Flask class. 
 app = Flask(__name__, static_folder="static")
+# gui =  flaskwebgui.FlaskUI(app)
 
 #Add reference fingerprint. 
 #Cookies travel with a signature that they claim to be legit. 
@@ -104,7 +107,11 @@ def download_file():
 
 if __name__ == "__main__":
     print("[+] RUNNING")
-    port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
-    app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
-    # app.run()
+
+    # port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
+    # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
+
+    app.run(debug=True)
+    # gui.run(host='0.0.0.0')
+    # flaskwebgui.FlaskUI(app=app, server="flask", width=800, height=600).run()
 

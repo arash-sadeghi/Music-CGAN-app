@@ -10,3 +10,7 @@ static/data/
 models/Velocity_assigner/weights_1500.pts
 .vscode/
 .deployment
+DAM.spec
+build/
+data/
+dist/

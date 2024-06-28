@@ -1,10 +1,10 @@
-# from models.Generator import Generator
-# from models.midi2pianoroll import midi_to_piano_roll , listen4midi
-# from models.CONST_VARS import CONST
+from models.Generator import Generator
+from models.midi2pianoroll import midi_to_piano_roll
+from models.CONST_VARS import CONST
 
-from Generator import Generator
-from midi2pianoroll import midi_to_piano_roll , plot_multitrack
-from CONST_VARS import CONST
+# from Generator import Generator
+# from midi2pianoroll import midi_to_piano_roll , plot_multitrack
+# from CONST_VARS import CONST
 import matplotlib.pyplot as plt
 
 import torch
@@ -20,7 +20,7 @@ import queue
 
 import os
 
-from Velocity_assigner.assign_velocity import VelocityAssigner
+# from Velocity_assigner.assign_velocity import VelocityAssigner
 
 MIDI_OUT_PORT = 'IAC Driver Bus 2'
 # MIDI_INPUT_PORT = 'Oxygen 61'
@@ -32,6 +32,7 @@ class Predictor:
     # WEIGHT_PATH = 'models\generator_800.pth'
     # WEIGHT_PATH = os.path.join('models','generator_19900.pth')
     WEIGHT_PATH = os.path.join('models','generator_weights.pth')
+    # WEIGHT_PATH = os.path.join('models','generator_weights.pth')
     # WEIGHT_PATH = os.path.join('models','training_output_path_rootgenerator_20000.pth')
     GENRE = 'Pop_Rock' #'Latin' #
     EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
@@ -219,19 +220,15 @@ def replace_drum(DB_path, D_path, output_path, vels):
     DB.write(output_path)
 
 
-if __name__ == '__main__':
-    p = Predictor()
-    # t1 = p.generate_drum(bass_url = 'E:\Arash Workdir\Music-CGAN-app\static\\full_dataset_instance_cleaned-Contrabass_Bass.mid')
+# if __name__ == '__main__':
+#     p = Predictor()
+#     va = VelocityAssigner()
+#     # D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/offline_drum.midi"
+#     # DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/generated_drum_Pop_Rock_Fri_May_17_01_18_42_2024DB.midi"
+#     D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum of given LPD bass D.midi"
+#     DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum with given bass.midi"
+#     drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
+#     DB_with_vel_path = 'LPD_DB_with_vel.midi'
+#     replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
 
-    # t1 , DB_path , D_path = p.generate_drum(bass_url = 'static\midi\sample_rock_song_from_dataset_DB.midi')
-    # t1 , DB_path , D_path = p.generate_drum(bass_url = '/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/ASProject.mid')
-    va = VelocityAssigner()
-    # D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/offline_drum.midi"
-    # DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/generated_drum_Pop_Rock_Fri_May_17_01_18_42_2024DB.midi"
-    D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum of given LPD bass D.midi"
-    DB_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/static/midi/for_publishing/generated drum with given bass.midi"
-    drum_with_velocity_path , vels = va.assing_velocity2midi(D_path)
-    DB_with_vel_path = 'LPD_DB_with_vel.midi'
-    replace_drum(DB_path , drum_with_velocity_path , DB_with_vel_path , vels)
-
-    # p.real_time_loop()
+#     # p.real_time_loop()

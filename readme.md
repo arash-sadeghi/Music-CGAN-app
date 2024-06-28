@@ -1,3 +1,4 @@
+ pyinstaller --name DAM --onefile --paths ./.env/lib/python3.11/site-packages --add-data 'static:static' --add-data 'templates:templates' --add-data 'models/generator_weights.pth:models' app.py
 ## important: 
 - velocity assigner changes drum midi pitches
 ## Todo

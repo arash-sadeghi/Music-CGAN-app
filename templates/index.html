@@ -4,13 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Drummer Companion</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <!-- <link rel="stylesheet" href="static/styles.css"> -->
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
 </head>
 <body>
 
   <div class="container">
-    <div class="content">
+
+    <div class="tabs">
+      <button class="tab-button active" onclick="openTab('offline-tab', this)">Offline Drum Accompaniment</button>
+      <button class="tab-button" onclick="openTab('realtime-tab', this)">Real-time Drum Accompaniment</button>
+    </div>
+
+    <div id="offline-tab" class="tab-content active">
       <h1>Drum Generator for Your Bass Track</h1>
       <p class="subtitle">Upload a bass track MIDI file and get a drum track.</p>
       <p class="subtitle"> Make sure your bass track is in tempo 100 and rhythm 4/4.</p>
@@ -29,7 +36,12 @@
         <input type="submit" name="submit" value="Submit">
       </form>
     </div>
-  </div>
 
+    <div id="realtime-tab" class="tab-content">
+      <h1>Real-time</h1>
+    </div>
+
+  </div>
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
