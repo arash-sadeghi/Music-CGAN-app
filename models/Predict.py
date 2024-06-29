@@ -1,10 +1,11 @@
 from models.Generator import Generator
-from models.midi2pianoroll import midi_to_piano_roll
+from models.midi2pianoroll import midi_to_piano_roll, plot_multitrack
 from models.CONST_VARS import CONST
 
 # from Generator import Generator
 # from midi2pianoroll import midi_to_piano_roll , plot_multitrack
 # from CONST_VARS import CONST
+
 import matplotlib.pyplot as plt
 
 import torch
@@ -27,23 +28,29 @@ MIDI_OUT_PORT = 'IAC Driver Bus 2'
 MIDI_INPUT_PORT = 'A-PRO 1'
 # MIDI_INPUT_PORT = 'IAC Driver Bus 1'
 TIME_WINDOW = 10
+
+
 class Predictor:
+    ROOT = os.path.dirname(os.path.abspath(__file__)) #!root path. this is for deployment
     # WEIGHT_PATH = 'training_output_path_rootgenerator_20000.pth'
     # WEIGHT_PATH = 'models\generator_800.pth'
     # WEIGHT_PATH = os.path.join('models','generator_19900.pth')
-    WEIGHT_PATH = os.path.join('models','generator_weights.pth')
+    WEIGHT_PATH = os.path.join(ROOT,'generator_weights.pth')
     # WEIGHT_PATH = os.path.join('models','generator_weights.pth')
     # WEIGHT_PATH = os.path.join('models','training_output_path_rootgenerator_20000.pth')
     GENRE = 'Pop_Rock' #'Latin' #
     EXECUTION_TIME = ctime(time()).replace(':','_').replace(' ','_')
-    SAVE_PATH = os.path.join('static','midi',f'generated_drum_{GENRE}_{EXECUTION_TIME}')
+    RES_PATH = os.path.join(ROOT,'results')
+    SAVE_PATH = os.path.join(RES_PATH,f'generated_drum_{GENRE}_{EXECUTION_TIME}')
     def __init__(self) -> None:
-        self.generator = Generator()
+        print("[+] Predict ROOT",Predictor.ROOT)
+        self.generator = Generator()    
         self.generator.load_state_dict(torch.load(Predictor.WEIGHT_PATH , map_location=torch.device('cpu'))) #TODO specific to cpu machine only
         self.generator.eval() #! this solve error thrown by data length
 
     
     def generate_drum(self, bass_piano_roll = None, tempo_array = None, bass_url = None):
+        print("[+] Predictor predicting offline drum")
         if not bass_url is None:
             bass_piano_roll , tempo_array = midi_to_piano_roll(bass_url)
         #TODO what is 64 here?
@@ -62,7 +69,7 @@ class Predictor:
         if not np.all(illegal_pitches_down == 0) :
             print("[-] Illegal down note")
 
-        bass_piano_roll = torch.tensor(bass_piano_roll)
+        bass_piano_roll = torch.tensor(bass_piano_roll) #! in webgui blocks execution
         bass_piano_roll = bass_piano_roll[:,CONST.lowest_pitch:CONST.lowest_pitch + CONST.n_pitches] 
         bass_piano_roll = bass_piano_roll.view(-1,64,72)
 
@@ -102,7 +109,7 @@ class Predictor:
         multi_track = Multitrack(tracks=tracks,tempo=tempo_array,resolution=CONST.beat_resolution)
         multi_track_drum = Multitrack(tracks=drum_track,tempo=tempo_array,resolution=CONST.beat_resolution)
 
-        plot_multitrack(multi_track.copy() , Predictor.SAVE_PATH+'.png')
+        # plot_multitrack(multi_track.copy() , Predictor.SAVE_PATH+'.png') #! causes error from app by flask
         DB_midi = multi_track.to_pretty_midi()
         output_midi_name = Predictor.SAVE_PATH+'DB.midi'
         DB_midi.write(output_midi_name)
@@ -110,6 +117,7 @@ class Predictor:
         output_midi_drum_name = Predictor.SAVE_PATH+'D.midi'
         multi_track_drum.to_pretty_midi().write(output_midi_drum_name)
 
+        print("[+] Predictor Done")
         return DB_midi , output_midi_name , output_midi_drum_name
     
     def publish_midi(self):
@@ -187,7 +195,7 @@ class Predictor:
         self.process_begin_time = time()
         pm_data.instruments.append(bass)
         print(f"[+][Listener] number of midi messages listener received {len(bass.notes)} listening duration {time()-listen_start_time}")
-        pm_data.write("static/midi/debug/debug_listened_midi.midi") #* no problem here
+        pm_data.write(os.path.join(Predictor.RES_PATH,"listened_midi.midi")) #* no problem here
         return midi_to_piano_roll(midi_data = pm_data) #! problem
 
     def real_time_loop(self):
@@ -220,7 +228,11 @@ def replace_drum(DB_path, D_path, output_path, vels):
     DB.write(output_path)
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
+    predictor = Predictor()
+    res_path = predictor.generate_drum(bass_url = '/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Server_App/models/results/user_file.midi')
+    # print("res_path",res_path)
+
 #     p = Predictor()
 #     va = VelocityAssigner()
 #     # D_path = "/Users/arashsadeghiamjadi/Desktop/WORKDIR/JamBuddy/Results/Samples/offline_drum.midi"

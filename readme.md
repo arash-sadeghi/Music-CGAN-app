@@ -1,4 +1,14 @@
- pyinstaller --name DAM --onefile --paths ./.env/lib/python3.11/site-packages --add-data 'static:static' --add-data 'templates:templates' --add-data 'models/generator_weights.pth:models' app.py
+# Deplyment probelms
+## webgui
+- bass_piano_roll = torch.tensor(bass_piano_roll) blocks webgui. it doesn't allow for app to continue
+    - for now we relly on flask and browser without webgui
+## pyinstaller
+- [x] pyinstaller couldn't find files and paths but it was ok with other python modules. Solved it by using onedir and getting absolute path by relying on _interanl files
+
+# pyinstaller commands
+pyinstaller --name DAM --onefile --paths ./.env/lib/python3.11/site-packages --add-data 'static:static' --add-data 'templates:templates' --add-data 'models/generator_weights.pth:models' app.py
+
+pyinstaller --name DAM --onedir --paths ./.env/lib/python3.11/site-packages --add-data 'static:static' --add-data 'templates:templates' --add-data 'models:models' app.py
 ## important: 
 - velocity assigner changes drum midi pitches
 ## Todo

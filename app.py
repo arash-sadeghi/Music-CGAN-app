@@ -21,7 +21,8 @@ predictor = Predictor()
 # va = VelocityAssigner()
 
 #Save images to the 'static' folder as Flask serves images from this directory
-UPLOAD_FOLDER = 'static/'
+UPLOAD_FOLDER = 'models/results/'
+ROOT = os.path.dirname(os.path.abspath(__file__)) #!root path. this is for deployment
 
 #Create an app object using the Flask class. 
 app = Flask(__name__, static_folder="static")
@@ -70,9 +71,9 @@ def submit_file():
         
         if file:
             filename = secure_filename(file.filename)  # Use this werkzeug method to secure filename.
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'],'user_file.midi')
+            save_path = os.path.join(ROOT,app.config['UPLOAD_FOLDER'],'user_file.midi')
             file.save(save_path)
-            res_path = predictor.generate_drum(save_path)
+            _ , res_path , _ = predictor.generate_drum(bass_url = save_path)
 
             checkbox_value = request.form.get('assing-velocity', None)
 
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     # port = int(os.environ.get('PORT', 3009)) #Define port so we can map container port to localhost
     # app.run(host='0.0.0.0', port=port)  #Define 0.0.0.0 for Docker
 
-    app.run(debug=True)
+    app.run()
     # gui.run(host='0.0.0.0')
     # flaskwebgui.FlaskUI(app=app, server="flask", width=800, height=600).run()
 

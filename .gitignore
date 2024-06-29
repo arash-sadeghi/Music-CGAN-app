@@ -14,3 +14,4 @@ DAM.spec
 build/
 data/
 dist/
+models/results/

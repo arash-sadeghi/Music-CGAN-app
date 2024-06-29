@@ -1,7 +1,9 @@
 import pretty_midi
 import pypianoroll
+
 from models.CONST_VARS import CONST
 # from CONST_VARS import CONST
+
 import os
 import matplotlib.pyplot as plt
 
@@ -38,8 +40,8 @@ def midi_to_piano_roll(midi_file_path = '',midi_data=None):
     multi_track = pypianoroll.from_pretty_midi(midi_data,algorithm='strict')
     multi_track.set_resolution(CONST.beat_resolution) 
     multi_track.binarize()
-    plot_multitrack(multi_track.copy(),os.path.join('static','midi','from_midi_to_piano_roll.png'))
+    # plot_multitrack(multi_track.copy(),output+".png")
     piano_roll = multi_track.stack()
-    multi_track.write(os.path.join('static','midi','from_midi_to_piano_roll.midi'))
+    # multi_track.write(output+"midi")
     return piano_roll.squeeze() , multi_track.tempo
 
