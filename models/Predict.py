@@ -50,6 +50,7 @@ class Predictor:
         self.generator.eval() #! this solve error thrown by data length
         self.MRH = Midi_Receive_Handler()
         self.MPH = Midi_Publish_Handler()
+        self.is_real_time_setup = False
 
     def generate_drum(self, bass_piano_roll = None, tempo_array = None, bass_url = None):
         print("[+] Predictor predicting offline drum")
@@ -138,15 +139,17 @@ class Predictor:
 
         
     def real_time_setup(self,socket, app):
-        print("[+] real_time_loop started")
-        self.MRH.init()
-        self.MPH.set_socket(socket, app)
-        self.stop_listening = False
+        if not self.is_real_time_setup:
+            self.real_time_setup = True
+            print("[+] real_time_loop started")
+            self.MRH.init()
+            self.MPH.set_socket(socket, app)
+            self.stop_listening = False
 
-        self.lock = threading.Lock() #TODO should this be set to other classed MPH and MRH as well?
+            self.lock = threading.Lock() #TODO should this be set to other classed MPH and MRH as well?
 
-        self.processing_thread_drum_gen = threading.Thread(target=self.generate_drum_thread)
-        self.processing_thread_drum_gen.start()
+            self.processing_thread_drum_gen = threading.Thread(target=self.generate_drum_thread)
+            self.processing_thread_drum_gen.start()
 
 
     def real_time_receive(self,message):
@@ -155,6 +158,7 @@ class Predictor:
     def stop_real_time(self):
         print("[Predictor] stopping realtime loop ... ")
         self.stop_listening = True
+        self.is_real_time_setup = False
         self.processing_thread_drum_gen.join()
         self.MPH.stop_listening()
         self.MRH.stop_listening()

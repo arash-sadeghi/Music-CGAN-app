@@ -79,19 +79,28 @@ def realtime(data):
     if data["action"] == 'Start':
         print(f"[+][app.py] starting real-time")
         predictor.real_time_setup(socketio , app)
+        message = 'DAS Server Starting and Setup'
 
     elif data["action"] == 'Stop':
         print(f"[+][app.py] real time stopped")
         predictor.stop_real_time()
+        message = 'DAS Server Stoping'
 
     elif data["action"] == 'Process':
         if predictor.MRH.get_initilized():
             predictor.real_time_receive(data)
+            message = 'DAS Server Listening, wait for results...'
         else:
             print('[app.py] MRH is not initilized yet. but now it is')
             predictor.real_time_setup(socketio, app)
+            message = 'DAS Server Started but now Setup'
 
-
+    response = {
+        "status": "success",
+        "message": message
+    }
+    emit('server_status', response ,namespace='/realtime')
+    # return jsonify(response), 200  # Return JSON response with HTTP 200 status
     return jsonify(success=True)
 
 @app.route('/offline', methods=['POST'])

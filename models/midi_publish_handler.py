@@ -61,4 +61,4 @@ class Midi_Publish_Handler:
 
             print('emitting')
             # self.socket.emit('server_message', mido_messages_sorted, namespace='/realtime', broadcast=True)    
-            self.socket.emit('server_message', mido_messages_sorted, namespace='/realtime')    
+            self.socket.emit('drum_midi', mido_messages_sorted, namespace='/realtime')    
